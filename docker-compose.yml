@@ -1,0 +1,78 @@
+version: '3.8'
+services:
+  db:
+    #image: postgres:9.6.19 #la version 9 no soporta "CALL PROCEDURE"
+    image: postgres:13
+    container_name: postgres--db
+    # env_file:
+    #   - .env
+    environment:
+      POSTGRES_DB: octane
+      POSTGRES_USER: octane
+      POSTGRES_PASSWORD: octane
+    ports: # <Client side>:<Container side>
+      - 5432:5432
+    expose: # Opens port 5432 on the container
+      - 5432
+    volumes: #<docker engine>:<container># Where our data will be persisted
+      - _db:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  pgadmin4:
+    # https://hub.docker.com/r/phpmyadmin/phpmyadmin/
+    # https://www.pgadmin.org/docs/pgadmin4/4.25/container_deployment.html
+    image: biarms/pgadmin4
+    #image: dpage/pgadmin4
+    container_name: pga4--db
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_LISTEN_PORT: ${PGADMIN_LISTEN_PORT}
+    ports: # <Client side>:<Container side>
+      - 5050:5050
+    volumes: #<full docker engine> Where our data will be persisted
+      - _pgadmin4
+    expose: # Opens port 5050 on the container
+      - 5050
+    depends_on:
+      - db
+    networks:
+      - internal
+
+  api: #https://hub.docker.com/_/node/
+    image: node
+    container_name: express--api
+    working_dir: /home/node/api
+    volumes: #<host>:<container> #from here to there
+      - ./api/:/home/node/api
+    ports:
+      - 5000:5000
+    command: 'npm start'
+    depends_on:
+      - db
+    networks:
+      - internal
+
+  web: #https://hub.docker.com/_/node/
+    image: node
+    container_name: react--dashboard
+    working_dir: /dashboard
+    command: 'npm start'
+    ports:
+      - 3000:3000
+    depends_on:
+      - db
+    networks:
+      - internal
+    volumes: #<host>:<container> #from here to there
+      - ./dashboard/:/dashboard
+    environment: #https://github.com/facebook/create-react-app/issues/8688 (control + F: CI=true)
+      - CI=true
+
+volumes:
+  _db:
+  _pgadmin4:
+
+networks:
+  internal: 
