@@ -1,6 +1,6 @@
 # octane
 
-Enhance your driving experience
+Gain insights of your daily driving
 
 Backup:
 docker container exec -t postgres--db pg_dumpall -c -U octane > dump-`date +%d-%m-%Y"*"%H\_%M\*%S`.sql
